@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modul 2 - Daftar Proyek</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Gaya tambahan untuk form CRUD & pencarian (aman jika style.css tidak mengaturnya) */
+        .form-proyek, .cari-proyek { margin: 1rem 0; }
+        .form-proyek .baris { margin-bottom: 0.75rem; }
+        .form-proyek label { display: block; font-weight: bold; margin-bottom: 0.25rem; }
+        .form-proyek input, .form-proyek textarea, .cari-proyek input {
+            width: 100%; max-width: 520px; padding: 0.5rem; box-sizing: border-box; font: inherit;
+        }
+        .aksi button, .form-proyek button { padding: 0.4rem 0.9rem; margin-right: 0.4rem; cursor: pointer; font: inherit; }
+        .info { font-size: 0.9rem; opacity: 0.8; }
+        .pesan-kosong { font-style: italic; }
+        .galat { color: #b00020; font-size: 0.9rem; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Proyek Pengembangan Web</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Beranda</a></li>
+                <li><a href="resume.html">Resume</a></li>
+                <li><a href="project.html">Proyek</a></li>
+                <li><a href="kontak.html">Kontak</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <hr>
+
+    <main>
+        <!-- FORM TAMBAH / UBAH PROYEK (Create & Update) -->
+        <section id="form-proyek-section">
+            <h2 id="judul-form">Tambah Proyek Baru</h2>
+            <form id="form-proyek" class="form-proyek" novalidate>
+                <input type="hidden" id="proyek-id">
+
+                <div class="baris">
+                    <label for="judul">Judul Proyek</label>
+                    <input type="text" id="judul" placeholder="Contoh: Sistem Manajemen Inventori" required>
+                </div>
+
+                <div class="baris">
+                    <label for="teknologi">Teknologi (pisahkan dengan koma)</label>
+                    <input type="text" id="teknologi" placeholder="Contoh: HTML, CSS, JavaScript" required>
+                </div>
+
+                <div class="baris">
+                    <label for="tahun">Tahun</label>
+                    <input type="number" id="tahun" min="1990" max="2100" placeholder="2026" required>
+                </div>
+
+                <div class="baris">
+                    <label for="deskripsi">Deskripsi</label>
+                    <textarea id="deskripsi" rows="4" placeholder="Jelaskan proyek Anda secara singkat" required></textarea>
+                </div>
+
+                <p class="galat" id="galat" role="alert"></p>
+
+                <button type="submit" id="btn-simpan">Simpan Proyek</button>
+                <button type="button" id="btn-batal" hidden>Batal Ubah</button>
+            </form>
+        </section>
+
+        <hr>
+
+        <!-- DAFTAR PROYEK (Read) + PENCARIAN -->
+        <section id="daftar-proyek">
+            <h2>Daftar Proyek</h2>
+
+            <div class="cari-proyek">
+                <label for="cari" class="info">Cari proyek (judul, teknologi, tahun, atau deskripsi):</label><br>
+                <input type="search" id="cari" placeholder="Ketik untuk mencari...">
+            </div>
+            <p class="info" id="info-hasil"></p>
+
+            <div id="list-proyek"></div>
+        </section>
+
+        <hr>
+
+        <section id="fokus-pengembangan">
+            <h2>Fokus Pengembangan</h2>
+            <p>
+                Pengembangan proyek difokuskan pada pembuatan aplikasi web
+                yang dapat membantu proses pengelolaan data dan pemrosesan
+                transaksi secara lebih terstruktur dan efisien.
+            </p>
+        </section>
+
+        <hr>
+
+        <aside>
+            <h3>Kerja Sama</h3>
+            <p>
+                Saat ini terbuka untuk proyek freelance dan kolaborasi
+                pengembangan web.
+            </p>
+            <p><a href="kontak.html">Hubungi Saya untuk Proyek</a></p>
+        </aside>
+    </main>
+
+    <hr>
+
+    <footer>
+        <p>&copy; 2026 Portofolio Mahasiswa - All Rights Reserved</p>
+    </footer>
+
+    <script>
+        const KUNCI = 'daftarProyek';
+
+        // Data awal (diambil dari isi halaman sebelumnya)
+        const DATA_AWAL = [
+            {
+                id: 1,
+                judul: 'Sistem Manajemen Inventori Database',
+                teknologi: ['HTML', 'CSS', 'JavaScript', 'MySQL'],
+                tahun: 2026,
+                deskripsi: 'Aplikasi web berbasis lokal untuk mencatat dan mengelola sirkulasi barang secara efisien serta terintegrasi dengan database MySQL.'
+            },
+            {
+                id: 2,
+                judul: 'Aplikasi Kasir & Perhitungan Transaksi',
+                teknologi: ['JavaScript ES6', 'Array of Objects', 'Logika pemrosesan transaksi'],
+                tahun: 2026,
+                deskripsi: 'Program logika pemrosesan transaksi belanja yang menghitung total pembayaran dan diskon menggunakan struktur Array of Objects.'
+            }
+        ];
+
+        // ---------- Penyimpanan (localStorage) ----------
+        function muatData() {
+            try {
+                const mentah = localStorage.getItem(KUNCI);
+                if (mentah === null) return DATA_AWAL.slice();
+                const data = JSON.parse(mentah);
+                return Array.isArray(data) ? data : DATA_AWAL.slice();
+            } catch (e) {
+                return DATA_AWAL.slice();
+            }
+        }
+
+        function simpanData() {
+            try {
+                localStorage.setItem(KUNCI, JSON.stringify(proyek));
+            } catch (e) {
+                console.error('Gagal menyimpan data:', e);
+            }
+        }
+
+        let proyek = muatData();
+
+        // ---------- Elemen ----------
+        const form = document.getElementById('form-proyek');
+        const inputId = document.getElementById('proyek-id');
+        const inputJudul = document.getElementById('judul');
+        const inputTeknologi = document.getElementById('teknologi');
+        const inputTahun = document.getElementById('tahun');
+        const inputDeskripsi = document.getElementById('deskripsi');
+        const inputCari = document.getElementById('cari');
+        const elList = document.getElementById('list-proyek');
+        const elInfo = document.getElementById('info-hasil');
+        const elGalat = document.getElementById('galat');
+        const judulForm = document.getElementById('judul-form');
+        const btnSimpan = document.getElementById('btn-simpan');
+        const btnBatal = document.getElementById('btn-batal');
+
+        // ---------- Util ----------
+        function buatEl(tag, teks) {
+            const el = document.createElement(tag);
+            if (teks !== undefined) el.textContent = teks; // textContent = aman dari XSS
+            return el;
+        }
+
+        function idBaru() {
+            return proyek.reduce((maks, p) => Math.max(maks, p.id), 0) + 1;
+        }
+
+        function parseTeknologi(teks) {
+            return teks.split(',').map(t => t.trim()).filter(t => t !== '');
+        }
+
+        // ---------- READ + SEARCH ----------
+        function render() {
+            const kata = inputCari.value.trim().toLowerCase();
+
+            const hasil = proyek.filter(p => {
+                if (kata === '') return true;
+                const gudang = [p.judul, p.deskripsi, String(p.tahun), p.teknologi.join(' ')]
+                    .join(' ').toLowerCase();
+                return gudang.includes(kata);
+            });
+
+            elList.innerHTML = '';
+
+            if (kata === '') {
+                elInfo.textContent = 'Menampilkan ' + proyek.length + ' proyek.';
+            } else {
+                elInfo.textContent = 'Ditemukan ' + hasil.length + ' dari ' + proyek.length +
+                    ' proyek untuk "' + inputCari.value.trim() + '".';
+            }
+
+            if (hasil.length === 0) {
+                elList.appendChild(buatEl('p',
+                    proyek.length === 0
+                        ? 'Belum ada proyek. Tambahkan proyek pertama Anda lewat form di atas.'
+                        : 'Tidak ada proyek yang cocok dengan pencarian.'
+                )).classList.add('pesan-kosong');
+                return;
+            }
+
+            hasil.forEach((p, i) => {
+                const article = document.createElement('article');
+
+                const header = document.createElement('header');
+                header.appendChild(buatEl('h3', (i + 1) + '. ' + p.judul));
+
+                const meta = document.createElement('p');
+                meta.appendChild(document.createTextNode('Teknologi: ' + p.teknologi.join(', ') + ' | Tahun: '));
+                const waktu = buatEl('time', String(p.tahun));
+                waktu.setAttribute('datetime', String(p.tahun));
+                meta.appendChild(waktu);
+                header.appendChild(meta);
+                article.appendChild(header);
+
+                article.appendChild(buatEl('p', p.deskripsi));
+
+                article.appendChild(buatEl('h4', 'Teknologi yang Digunakan'));
+                const ul = document.createElement('ul');
+                p.teknologi.forEach(t => ul.appendChild(buatEl('li', t)));
+                article.appendChild(ul);
+
+                const aksi = document.createElement('div');
+                aksi.className = 'aksi';
+
+                const btnEdit = buatEl('button', 'Ubah');
+                btnEdit.type = 'button';
+                btnEdit.addEventListener('click', () => mulaiUbah(p.id));
+
+                const btnHapus = buatEl('button', 'Hapus');
+                btnHapus.type = 'button';
+                btnHapus.addEventListener('click', () => hapusProyek(p.id));
+
+                aksi.appendChild(btnEdit);
+                aksi.appendChild(btnHapus);
+                article.appendChild(aksi);
+
+                elList.appendChild(article);
+                if (i < hasil.length - 1) elList.appendChild(document.createElement('hr'));
+            });
+        }
+
+        // ---------- CREATE & UPDATE ----------
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            elGalat.textContent = '';
+
+            const judul = inputJudul.value.trim();
+            const teknologi = parseTeknologi(inputTeknologi.value);
+            const tahun = parseInt(inputTahun.value, 10);
+            const deskripsi = inputDeskripsi.value.trim();
+
+            if (!judul || teknologi.length === 0 || !deskripsi || isNaN(tahun)) {
+                elGalat.textContent = 'Semua kolom wajib diisi (teknologi minimal satu, tahun berupa angka).';
+                return;
+            }
+
+            if (inputId.value === '') {
+                // CREATE
+                proyek.push({ id: idBaru(), judul, teknologi, tahun, deskripsi });
+            } else {
+                // UPDATE
+                const id = Number(inputId.value);
+                const p = proyek.find(x => x.id === id);
+                if (p) {
+                    p.judul = judul;
+                    p.teknologi = teknologi;
+                    p.tahun = tahun;
+                    p.deskripsi = deskripsi;
+                }
+            }
+
+            simpanData();
+            resetForm();
+            render();
+        });
+
+        function mulaiUbah(id) {
+            const p = proyek.find(x => x.id === id);
+            if (!p) return;
+            inputId.value = p.id;
+            inputJudul.value = p.judul;
+            inputTeknologi.value = p.teknologi.join(', ');
+            inputTahun.value = p.tahun;
+            inputDeskripsi.value = p.deskripsi;
+            judulForm.textContent = 'Ubah Proyek';
+            btnSimpan.textContent = 'Simpan Perubahan';
+            btnBatal.hidden = false;
+            elGalat.textContent = '';
+            document.getElementById('form-proyek-section').scrollIntoView({ behavior: 'smooth' });
+            inputJudul.focus();
+        }
+
+        function resetForm() {
+            form.reset();
+            inputId.value = '';
+            judulForm.textContent = 'Tambah Proyek Baru';
+            btnSimpan.textContent = 'Simpan Proyek';
+            btnBatal.hidden = true;
+            elGalat.textContent = '';
+        }
+
+        btnBatal.addEventListener('click', resetForm);
+
+        // ---------- DELETE ----------
+        function hapusProyek(id) {
+            const p = proyek.find(x => x.id === id);
+            if (!p) return;
+            if (!confirm('Hapus proyek "' + p.judul + '"?')) return;
+            proyek = proyek.filter(x => x.id !== id);
+            // Jika proyek yang sedang diubah dihapus, reset form
+            if (inputId.value !== '' && Number(inputId.value) === id) resetForm();
+            simpanData();
+            render();
+        }
+
+        // ---------- SEARCH (real-time) ----------
+        inputCari.addEventListener('input', render);
+
+        render();
+    </script>
+
+</body>
+</html>
